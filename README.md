@@ -1,427 +1,317 @@
-![Ironhack logo](https://user-images.githubusercontent.com/23629340/40541063-a07a0a8a-601a-11e8-91b5-2f13e4e6b441.png)
+# CO2 Electroreduction: From Data to Insight
 
-# Project 1 | SQL: From Data to Insight
+## Project Overview
 
-*Data Science & Machine Learning — Week 3*
+Electrochemical CO2 reduction, or CO2RR, can convert carbon dioxide into useful chemicals and fuels.
 
-Build a complete data pipeline from raw data to visual insights. You will design a relational database, write SQL queries, and tell a story with data.
+CO2RR performance can vary with the catalyst, electrolyte, temperature, operating conditions, and the product formed.
 
-`SQLite` · `Python` · `Pandas` · `SQL queries` · `Data visualization` · `ETL pipeline`
+In this project, I used SQL and Python to organise and analyse literature data on CO2 reduction.
+
+The goal was to compare different CO2RR systems, identify useful patterns, and find promising combinations for further research.
 
 ---
 
-## Overview
+## Business / Research Problem
 
-In this project you build a complete data pipeline — from raw data to meaningful insights through SQL and Python visualisations. You design a relational database, populate it with real-world data, run analytical queries, and present your findings to the class.
+CO2RR involves many possible catalysts, products, electrolytes, and operating conditions.
 
-- **Format** — in pairs or on your own. Working in a pair, divide tasks daily and communicate often.
-- **Duration** — 4 working days + presentation on Friday morning.
-- **Tools** — Python (Pandas, Matplotlib/Seaborn), SQLite, DB Browser for SQLite, GitHub, Jupyter Notebooks.
-- **Repository** — click **Use this template** at the top of this page to create your own repo.
+This makes it difficult to decide which systems should be studied further.
 
-### The goal
+The main question in this project is:
 
-Craft a data story. Take data you find interesting, ask questions about it, design a database to hold it, use SQL to find answers, and visualise your insights. By the end of the week you should be able to present a clear narrative backed by data.
+> Which CO2RR systems appear promising enough for further research?
 
-> [!IMPORTANT]
-> Choose your dataset on launch day and stick with it. Switching datasets mid-week is the single most common way to lose this project.
+The analysis compares electrochemical performance, reported catalyst cost, and operating conditions to support early-stage research and development decisions.
 
-<br>
+---
 
-## The pipeline at a glance
+## Dataset
 
-Your project follows a classic ETL pipeline (Extract, Transform, Load) extended with analysis and reporting. This is the journey your data will take:
+The project uses a literature-based CO2 reduction dataset from Malek et al. (2021).
 
-1. **Choose & extract** — pick one of the three datasets below (or bring your own). Define your research questions.
-2. **Explore & design** — understand your fields. Sketch an ERD. Design a schema with 3+ tables.
-3. **Clean & transform** — wrangle in Python: handle missing values, fix types, normalise categories.
-4. **Load into SQL** — create the database and write each table into it with `to_sql`.
-5. **Query & analyse** — write SQL using `JOIN`, `GROUP BY`, `HAVING`, subqueries and aggregations.
-6. **Visualise & report** — build Python visualisations and compile everything into a notebook report.
-7. **Present** — design slides and present your story to the class on Friday morning.
+The original Excel file contains two experimental data sections, which were analysed separately.
 
-The three notebooks in this template map onto that pipeline: `01_eda.ipynb` is steps 1–2, `02_processing.ipynb` is steps 3–4, and `03_hypothesis_and_visualization.ipynb` is steps 5–6.
+### Low-Temperature Dataset
 
-<br>
+- 101 experimental records
+- Includes catalyst, product, reported catalyst cost, applied potential, Faradaic efficiency, current density, selectivity, and production rate
 
-## Which SQL engine
+### Second Experimental Dataset
 
-**You work in SQLite.** The whole database is a single `.db` file, there is no server to start, and `pandas.to_sql` writes straight into it — which is what Week 2 Day 4 covered. You inspect the file in **DB Browser for SQLite**.
+- 181 experimental records
+- Includes catalyst, electrolyte, temperature, total current density, voltage, and Faradaic efficiency
 
-**MySQL is a valid alternative.** If you prefer to run MySQL Workbench, everything in this brief still applies: swap `sqlite3.connect(...)` for a SQLAlchemy MySQL engine, and use `CREATE DATABASE` / `USE` in your schema script. The setup guide is in the **SQL Installation** unit in the portal. Two syntax differences to remember:
+---
 
-```sql
-SELECT * FROM mydb.listings;    -- MySQL: database.table
-SELECT * FROM listings;         -- SQLite: the file IS the database
+## Research Questions
 
-CONCAT(city, ', ', country)     -- MySQL
-city || ', ' || country         -- SQLite (and PostgreSQL, and MySQL too)
-```
+1. How do Faradaic efficiency and current density vary across catalyst–product combinations?
+2. Which catalyst–product combinations combine above-average Faradaic efficiency, above-average current density, and below-average reported catalyst cost?
+3. How does total current density vary across catalyst–electrolyte combinations?
+4. How do catalyst–electrolyte systems and current density differ across temperature groups?
 
-Whichever you pick, pick it on day one and keep it. Your grade does not depend on the engine.
+---
 
-<br>
+## Hypotheses
 
-## Choose your data
+### Hypothesis 1
 
-Three datasets, all licence-clear and all rich enough to normalise. They form a difficulty ladder — read [`data/README.md`](data/README.md) for the full description of each, how to download it, and its licence.
+Catalyst–product combinations will show different Faradaic efficiencies and current densities.
 
-| | Dataset | Difficulty | Licence | What you get |
-|---|---|---|---|---|
-| **1** | **Ironhack Payments** | Gentler start | Ironhack teaching data | Two related tables ready-made (cash requests and fees). You normalise out lookup tables to reach 3+. |
-| **2** | **Inside Airbnb** (Barcelona, Madrid, or another city) | Middle | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | One wide listings file plus a reviews file. A natural district → neighbourhood hierarchy to model. |
-| **3** | **Online Retail II** (UCI) | Hardest | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | 1.07M transaction rows in one flat sheet. Everything — customers, products, invoices — is yours to design. |
+### Hypothesis 2
 
-The two CC BY datasets **require attribution** in your README and on your data-acquisition slide. That is a condition of the licence, not a nicety, and it is graded — the exact lines to use are in [`data/README.md`](data/README.md).
+Only some catalyst–product combinations will combine high Faradaic efficiency, high current density, and lower reported catalyst cost.
 
-Fetch whichever you choose with the included script:
+### Hypothesis 3
 
-```bash
-python download_data.py payments    # or: airbnb, retail
-```
+Total current density will vary across catalyst–electrolyte combinations.
 
-Files land in `data/raw/`, which is gitignored. **Do not commit data.** Anyone cloning your repo runs the same script.
+### Hypothesis 4
 
-> [!NOTE]
-> **Bringing your own dataset?** You may, and you are graded on exactly the same rubric. Two rules: it must support **at least two genuinely related tables** so the database-design work is real, and its licence must permit educational use. Clear it with your teacher on launch day, not on Wednesday.
+The low- and high-temperature groups will contain different catalyst–electrolyte systems and different current-density patterns.
 
-<br>
+---
 
-## Day-by-day breakdown
+## Project Workflow
 
-Launch day (Friday of Week 2) is when you settle who you are working with, pick your dataset and click **Use this template** — so Monday starts with the data already downloaded.
+The project followed these main steps:
 
-### Day 1 — Questions, extraction and EDA
+1. Extract the relevant data from the original Excel file.
+2. Explore the data and check for missing values, duplicates, and unusual values.
+3. Clean and standardise the data.
+4. Design a relational database with primary and foreign keys.
+5. Load the cleaned data into SQLite.
+6. Use SQL to answer the research questions.
+7. Visualise and interpret the main findings.
 
-The decisions you make today shape your entire week.
+---
 
-- **Firm up your research questions.** You drafted them on launch day. Today you commit to at least **2 clear questions**, checked against what you now know is actually in the data — a question you cannot answer with the columns in front of you is better found today than on Wednesday.
-- **Frame the business case.** Who would care about these findings? What decisions could they inform?
-- Finish **`01_eda.ipynb`**: shape, dtypes, missing values, duplicates, distributions.
-- Pay attention to the **categorical cardinality** section. Columns with few repeated values are your lookup tables tomorrow.
+## Database Design
 
-> [!TIP]
-> By the end of today you should be able to name your tables out loud. If you cannot, you are behind — Tuesday is the heaviest day of the week and it assumes you arrive with a table list.
+The cleaned data were organised into five related tables.
 
-### Day 2 — Database design and loading
+### Lookup Tables
 
-Today you move from raw data to a structured database. This is the core engineering day.
+- `catalysts`
+- `products`
+- `electrolytes`
 
-- **Design your ERD.** Identify primary keys, foreign keys and table relationships. Draw it in [Excalidraw](https://excalidraw.com) or [draw.io](https://app.diagrams.net) and commit the image to your repo.
-- **Break your data into 3+ tables.** The guide further down shows exactly how.
-- Clean in Python: handle nulls, fix types, standardise categories, remove duplicates.
-- Export one CSV per table into `data/clean/`.
-- Write `sql/schema.sql` with your `CREATE TABLE` statements, then load each table with `to_sql`.
-- **Validate foreign keys** before you move on. A dangling key is the failure that costs people Wednesday.
+### Experiment Tables
 
-> [!IMPORTANT]
-> **Load order matters.** Start with the tables that have no foreign keys — your lookup tables — then load the main table that references them. And watch `if_exists`: `"replace"` drops the table and everything in it.
+- `low_temp_experiments`
+- `second_experiments`
 
-### Day 3 — SQL queries and analysis
+Primary keys uniquely identify records in each table.
 
-With your database loaded, it is time to query. This is where the insights emerge.
+Foreign keys connect the experiment tables to the corresponding catalyst, product, and electrolyte records.
 
-- Write **at least 5 insightful queries** that address your research questions.
-- Use a variety of features: `JOIN`, `GROUP BY`, `ORDER BY`, `HAVING`, `CASE`, subqueries.
-- Summarise with aggregations: `AVG`, `COUNT`, `SUM`, `MIN`, `MAX`.
-- **Document your queries** in `sql/queries.sql` with a comment on each saying what it does and what you found.
-- Pull the results into Pandas with `pd.read_sql` and start building the story in **`03_hypothesis_and_visualization.ipynb`**.
+### Entity Relationship Diagram
 
-### Day 4 — Visualisation, report and presentation
+![Entity Relationship Diagram](images/erd.png)
 
-The final push. Turn your findings into visuals and a narrative.
+---
 
-- Create **at least 2 visualisations** with Matplotlib or Seaborn that support your key findings.
-- Finish `03_hypothesis_and_visualization.ipynb`. **This notebook is your report deliverable**: text, code, outputs and charts telling the full story.
-- Build your slides in whatever tool you like — you present by sharing your own screen.
-- Finalise the repo: clean up code, write your README, organise files.
-- Practise the presentation. You have **7 minutes of slides plus a 3-minute live demo**.
+## SQL Analysis
 
-> [!NOTE]
-> **Keep the pipeline modular.** Reusable logic goes in `src/functions.py`, queries go in `sql/queries.sql`, and the notebook carries the narrative. That separation is one of the graded criteria, and it is why this template is laid out the way it is.
+SQL was used to answer the research questions and compare the different CO2RR systems.
 
-<br>
+The analysis included:
 
-## How to structure your database
+- `JOIN`
+- `GROUP BY`
+- `HAVING`
+- `COUNT`
+- `AVG`
+- `MIN`
+- `MAX`
+- subqueries
+- `CASE`
+- CTEs
+- window functions
 
-The core challenge is designing a database with at least 3 tables. You have two approaches.
+The complete SQL queries are stored in:
 
-### Option A — split one dataset into 3 tables (recommended)
+`sql/queries.sql`
 
-Start from a single dataset and normalise it by extracting categorical columns into lookup tables. This is the recommended path: more controlled, easier to manage.
+---
 
-1. **Pick your main dataset.** Something with enough columns and rows to be interesting.
-2. **Identify categorical columns.** Look for columns with a small number of repeated values — categories, types, locations, ratings.
-3. **Create lookup tables.** For each one, build a table with an ID and the descriptive value. Replace the original column in the main table with a foreign key.
-4. **Design the ERD.** Draw the relationships. Define primary and foreign keys.
-5. **Clean and export.** Clean each DataFrame and export them as separate CSVs.
+## Key Findings
 
-### Option B — combine multiple datasets (advanced)
+### 1. Performance differed across catalyst–product combinations
 
-Use two or more datasets that share a common field and can be joined. Harder, because matching independent sources takes more cleaning and careful alignment.
+Faradaic efficiency and current density varied widely across the different catalyst–product combinations.
 
-> [!TIP]
-> If you go with Option B, make sure the datasets share at least one column with **matching values** — country names, dates, product IDs. If merging turns out to be too complex, you can show the relationship through visualisations instead.
+This shows that a combination with high Faradaic efficiency does not necessarily also have a high current density.
 
-<br>
+### 2. Only a few combinations met all three screening criteria
 
-## Worked example: the Titanic dataset
+Only four catalyst–product combinations had:
 
-Let's walk through Option A on the classic Titanic dataset, splitting one table into three. Titanic is deliberately **not** one of your three options, so this shows you the method without solving your project for you.
+- above-average Faradaic efficiency
+- above-average current density
+- below-average reported catalyst cost
 
-### Step 1 — start with the original dataset
+The four combinations were:
 
-Titanic has columns like `PassengerId`, `Name`, `Sex`, `Age`, `Pclass`, `Fare`, `Embarked`, `Survived`.
+- `Ir-HCOOH`
+- `Ag-CO`
+- `Cu-CO`
+- `Ag-H2`
 
-| PassengerId | Name | Pclass | Embarked | Age | Survived |
-|---|---|---|---|---|---|
-| 1 | Braund, Owen | 3 | S | 22 | 0 |
-| 2 | Cumings, John | 1 | C | 38 | 1 |
-| 3 | Heikkinen, Laina | 3 | S | 26 | 1 |
+This shows that relatively few combinations performed well across all three criteria at the same time.
 
-### Step 2 — identify columns to extract
+### 3. Catalyst and electrolyte should be considered together
 
-`Pclass` (1, 2, 3) and `Embarked` (C, Q, S) are categorical columns with a small set of repeated values. Perfect candidates for lookup tables.
+Total current density varied across catalyst–electrolyte combinations.
 
-### Step 3 — create the lookup tables
+The highest average current densities were observed for:
 
-**`ticket_class`**
+- `Ni-YSZ / YSZ`
+- `Ni-YSZ / CGO-YSZ`
 
-| class_id | class_name |
-|---|---|
-| 1 | 1st Class |
-| 2 | 2nd Class |
-| 3 | 3rd Class |
+This suggests that catalyst performance should not be considered separately from the electrolyte used with it.
 
-**`port`**
+### 4. Temperature-group differences were descriptive
 
-| port_id | port_name |
-|---|---|
-| 1 | Cherbourg |
-| 2 | Queenstown |
-| 3 | Southampton |
+The systems with the highest average current densities were found in the high-temperature group.
 
-### Step 4 — update the main table with foreign keys
+However, the low- and high-temperature groups contained different catalyst–electrolyte systems.
 
-Replace `Pclass` with `class_id` (FK) and `Embarked` with `port_id` (FK).
+Therefore, the analysis does not show that temperature alone caused the difference in current density.
 
-**`passengers`**
+---
 
-| passenger_id (PK) | name | class_id (FK) | port_id (FK) | age | survived |
-|---|---|---|---|---|---|
-| 1 | Braund, Owen | 3 | 3 | 22 | 0 |
-| 2 | Cumings, John | 1 | 1 | 38 | 1 |
+## Business / R&D Implications
 
-### Step 5 — the ERD
+The analysis can support early-stage research and development decisions.
 
-```
-┌──────────────────────┐          ┌──────────────────────┐
-│ ticket_class         │          │ port                 │
-├──────────────────────┤          ├──────────────────────┤
-│ PK class_id     INT  │          │ PK port_id      INT  │
-│    class_name   TEXT │          │    port_name    TEXT │
-└──────────┬───────────┘          └──────────┬───────────┘
-           │ 1                               │ 1
-           │                                 │
-           │ N                               │ N
-        ┌──┴─────────────────────────────────┴──┐
-        │ passengers                            │
-        ├───────────────────────────────────────┤
-        │ PK passenger_id  INT                  │
-        │    name          TEXT                 │
-        │ FK class_id      INT                  │
-        │ FK port_id       INT                  │
-        │    age           REAL                 │
-        │    survived      INT                  │
-        └───────────────────────────────────────┘
-```
+It can help researchers:
 
-Each passenger belongs to one ticket class and one port: two 1:N relationships. Draw yours in Excalidraw or draw.io and commit it as an image.
+- identify promising catalyst systems
+- compare systems using several performance criteria
+- reduce the number of systems selected for further testing
+- decide where to focus future experimental work
 
-### Step 6 — write the SQL schema
+The results do not show which system is ready for commercial use.
 
-In `sql/schema.sql`:
+Further evaluation would require additional information such as catalyst stability, energy efficiency, long-term performance, scale-up behaviour, and full process cost.
 
-```sql
-CREATE TABLE IF NOT EXISTS ticket_class (
-    class_id    INTEGER PRIMARY KEY,
-    class_name  TEXT NOT NULL
-);
+---
 
-CREATE TABLE IF NOT EXISTS port (
-    port_id     INTEGER PRIMARY KEY,
-    port_name   TEXT NOT NULL
-);
+## Limitations
 
-CREATE TABLE IF NOT EXISTS passengers (
-    passenger_id  INTEGER PRIMARY KEY,
-    name          TEXT,
-    class_id      INTEGER,
-    port_id       INTEGER,
-    age           REAL,
-    survived      INTEGER,
-    FOREIGN KEY (class_id) REFERENCES ticket_class(class_id),
-    FOREIGN KEY (port_id)  REFERENCES port(port_id)
-);
-```
+The results should be interpreted with care because:
 
-### Step 7 — load the tables
+- the data come from different literature studies
+- experimental conditions were not always the same
+- some catalyst–product groups contain only a small number of observations
+- voltage and Faradaic efficiency were not reported together in the second dataset
+- catalyst, electrolyte, temperature, and other operating conditions can differ at the same time
 
-In notebook 02, load each cleaned DataFrame in dependency order:
+Because of these limitations, the analysis identifies patterns and associations in the data but does not prove cause and effect.
 
-```python
-import sqlite3
-conn = sqlite3.connect("data/titanic.db")
+---
 
-ticket_class.to_sql("ticket_class", conn, if_exists="append", index=False)   # no FKs
-port.to_sql("port", conn, if_exists="append", index=False)                   # no FKs
-passengers.to_sql("passengers", conn, if_exists="append", index=False)       # has FKs, goes last
-```
+## Next Steps
 
-Then verify: row counts per table, and one test join that returns rows.
+Future work could include:
 
-<br>
+- adding more standardised CO2RR data
+- comparing full data distributions instead of only averages
+- using larger sample sizes for stronger comparisons
+- including catalyst stability and energy-efficiency data
+- applying statistical analysis when enough comparable data are available
+- applying machine-learning methods to larger and more standardised datasets
 
-## Deliverables
+---
 
-Your main deliverable is your GitHub repo, created from this template, containing:
+## Repository Structure
 
-| Item | Description |
-|---|---|
-| `README.md` | Project documentation. Anyone reading it should understand the project without browsing all the files. Replace this brief with your own. |
-| `sql/schema.sql` | Your `CREATE TABLE` statements and any other schema definitions. |
-| ERD diagram | An image showing tables, columns, primary keys, foreign keys and relationships. Excalidraw or draw.io. Commit it and link it from your README. |
-| `sql/queries.sql` | All the queries used in your analysis, with comments explaining the purpose and the finding. |
-| `src/functions.py` | Reusable functions for cleaning, transformation and loading. Your logic lives in functions, not pasted into cells. |
-| `notebooks/03_hypothesis_and_visualization.ipynb` | **The report.** The complete data story: text, clean code, outputs and visualisations. Separate from the pipeline code in notebooks 01 and 02. |
-| `download_data.py` | Left as-is, or extended if you brought your own data. It is how someone else reproduces your work without you committing the dataset. |
-| Slides | Linked or committed in your README, so they can be read after the presentation. Any tool. |
-
-### Minimum requirements
-
-Your project must meet all of these to pass:
-
-- **Research** — define at least **2 clear research questions** and analyse the data to address them coherently.
-- **Data source** — use one of the three provided datasets, or your own approved one. A **second source is a bonus**, not a requirement.
-- **Database** — at least **3 tables**, proper primary and foreign keys, and clear relationships.
-- **Data quality** — clean, format and restructure the data to maintain consistency and accuracy.
-| **SQL analysis** | At least **5 insightful queries** using `JOIN`, `GROUP BY`, `HAVING`, subqueries and aggregations. |
-| **Visualisation** | At least **2 visualisations** with Matplotlib or Seaborn. |
-
-The full grading rubric is in [`RUBRIC.md`](RUBRIC.md). Read it on day one — it tells you exactly what is being evaluated.
-
-> [!NOTE]
-> "Hypotheses" here means **business hypotheses** — "entire homes earn more per night than private rooms", which you support with descriptive evidence. Statistical hypothesis testing with p-values comes in Week 4. You are not expected to run a t-test, and you will not be graded on one.
-
-<br>
-
-## Advanced features (optional)
-
-Not required, but they will strengthen your project:
-
-- **Scalable pipeline** — functions that form a complete ETL, so fresh data can be reprocessed automatically.
-- **Data quality checks** — auxiliary functions that validate integrity as the database is updated.
-- **Advanced SQL** — views, window functions (`ROW_NUMBER`, `RANK`, `LAG`/`LEAD`) and CTEs.
-- **Interactive dashboards** — 5+ visualisations in Plotly, embedded in Streamlit or Dash.
-- **Performance optimisation** — add indexes, read the query plan with `EXPLAIN QUERY PLAN`, optimise accordingly.
-- **Multi-source integration** — merge a second source on a matching key for a richer analysis. This is the enrichment bonus: an API call or a small scrape that adds a column your main dataset lacks.
-
-<br>
-
-## Coding best practices
-
-- **Modularise.** Python logic in `.py` files with reusable functions. SQL in `.sql` files. The notebook is for the narrative.
-- **Name clearly.** Descriptive names for variables, functions, tables and columns. `snake_case` in both Python and SQL.
-- **Clean up.** Remove unused imports, commented-out code and test cells before submitting.
-- **Comment thoughtfully.** Explain *why*, not *what*. A comment should add context the code does not already carry.
-- **Commit often.** Small, frequent commits with descriptive messages. Working in a pair, your partner should know what you worked on from the history alone.
-
-<br>
-
-## Presentation guidelines
-
-| Component | Duration |
-|---|---|
-| Talking with slides | 7 minutes |
-| Live demo | 3 minutes |
-| **Total** | **10 minutes** |
-
-> [!IMPORTANT]
-> **You present from your own machine by sharing your screen.** Use whatever slide tool you prefer. Have everything open and ready before your slot — the clock does not wait while you find a file. Put a link to the slides, or the exported file, in your README so they can be read afterwards.
-
-### Suggested slide structure (~10 slides)
-
-1. **Title** — project title and your name or names.
-2. **Project overview** — your dataset, the business problem, your guiding hypotheses.
-3. **Data acquisition** — sources used, challenges while sourcing, how any supplemental data aligns with the primary data.
-4. **Database design** — show your ERD. Explain the relationships and defend your design decisions.
-5. **SQL insights** — showcase 1–2 standout findings. Highlight the challenging or revealing queries.
-6. **Visualisations** (1–2 slides) — your main charts and what they reveal.
-7. **Conclusions** — do the findings support or refute your hypotheses? What are the business implications?
-8. **Biggest obstacle** — what went wrong, what you learned, how it shaped the project.
-9. **Closing** — project title, your name or names, thank you.
-
-<br>
-
-## Repo layout
-
-The notebooks are laid out in sections with the intent of each one written down, and `src/functions.py` holds three empty stubs that exist only to show the shape. Everything else is empty on purpose. **This is a place to start, not a template to fill in** — rename things, add sections, delete the ones that do not fit your data. You are graded on the analysis, not on how closely you followed the scaffold.
-
-```
-.
-├── README.md                                    this brief — replace it with your own
-├── RUBRIC.md                                    how you are graded
-├── requirements.txt
-├── download_data.py                             fetches your chosen dataset into data/raw/
+```text
+project-1-eda-sql/
+│
 ├── data/
-│   ├── raw/                                     downloaded data, gitignored
-│   ├── clean/                                   one CSV per table, output of notebook 02
-│   └── README.md                                the three options, how to get them, licences
+│   ├── raw/
+│   ├── clean/
+│   └── project.db
+│
+├── images/
+│   ├── erd.drawio
+│   ├── erd.png
+│   └── project visualisations
+│
 ├── notebooks/
-│   ├── 01_eda.ipynb                             explore and question
-│   ├── 02_processing.ipynb                      clean, design, load
-│   └── 03_hypothesis_and_visualization.ipynb    query, visualise, report
+│   ├── 01_eda.ipynb
+│   ├── 02_processing.ipynb
+│   └── 03_hypothesis_and_visualization.ipynb
+│
+├── sql/
+│   ├── schema.sql
+│   └── queries.sql
+│
 ├── src/
-│   └── functions.py                             your reusable logic
-└── sql/
-    ├── schema.sql                               CREATE TABLE statements
-    └── queries.sql                              your analysis queries
+│   └── functions.py
+│
+├── README.md
+├── requirements.txt
+└── RUBRIC.md
 ```
 
-## Getting set up
+---
+
+## How to Run the Project
+
+1. Clone the repository:
 
 ```bash
-# 1. Click "Use this template" above, then clone YOUR new repo
-git clone https://github.com/<your-username>/<your-repo>.git
-cd <your-repo>
-
-# 2. Check you already have the libraries - a current Anaconda install does.
-#    If this prints, skip to step 3 and install nothing.
-python -c "import pandas, numpy, matplotlib, seaborn, openpyxl; print('all present')"
-
-#    Only if that failed. See the note in requirements.txt first: running pip
-#    against a conda environment can downgrade packages you did not ask about.
-pip install -r requirements.txt
-
-# 3. Download your dataset
-python download_data.py payments        # or: airbnb, retail
-
-# 4. Open the first notebook
-jupyter lab notebooks/01_eda.ipynb
+git clone <repository-url>
+cd project-1-eda-sql    *NB. This is just a placeholder. I will eventually replace with my actual GitHub repository link.*
 ```
 
-<br>
+2. Install the required packages:
 
-## Tips for success
+```bash
+pip install -r requirements.txt
+```
 
-1. **Choose your data on launch day and commit to it.** Switching mid-week costs you time you do not have.
-2. **Break the project into small tasks.** Many simple steps are easier to manage than one giant one.
-3. **Commit early and often.** Name your commits clearly — in a pair, so your partner knows what changed; on your own, so you do.
-4. **Explore the data before designing the database.** Understanding the data is half the work.
-5. **Ask for help early.** Stuck for more than 30 minutes? Reach out to a classmate, your TA or your teacher.
-6. **Test your SQL incrementally.** Start simple, then build complexity.
-7. **Make your report notebook tell a story** — intro, exploration, findings, conclusion. Imagine a non-technical reader.
-8. **Practise the presentation out loud** at least once before Friday. Time yourselves.
-9. **Read [`RUBRIC.md`](RUBRIC.md).** It tells you exactly what is being evaluated.
+3. Run the notebooks in this order:
 
-Good luck. Make something you are proud of.
+```text
+01_eda.ipynb
+02_processing.ipynb
+03_hypothesis_and_visualization.ipynb
+```
+
+Notebook 02 creates and loads the SQLite database used for the SQL analysis.
+
+---
+
+## Tools Used
+
+- Python
+- Pandas
+- NumPy
+- Matplotlib
+- Seaborn
+- SQLite
+- SQL
+- Jupyter Notebook
+- DB Browser for SQLite
+- draw.io
+- Git
+- GitHub
+
+---
+
+## References
+
+Malek, A. et al. (2021).  
+*A Data-Driven Framework for the Accelerated Discovery of CO2 Reduction Electrocatalysts.*  
+Frontiers in Energy Research, 9, 609070.  
+https://doi.org/10.3389/fenrg.2021.609070
+
+IPCC. (2021).  
+*Climate Change 2021: The Physical Science Basis.*  
+Contribution of Working Group I to the Sixth Assessment Report of the Intergovernmental Panel on Climate Change.  
+Cambridge University Press.
